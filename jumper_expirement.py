@@ -46,7 +46,6 @@ class JumperExperiment:
         scheduler = scheduler_gen(optimizer) if scheduler_gen else None
         if torch.cuda.is_available(): torch.cuda.reset_peak_memory_stats()
         start_time = time.perf_counter()
-        period = 1.02
         for epoch in range(1, epochs + 1):
             start_epoch_time = time.perf_counter()
 
@@ -82,15 +81,10 @@ class JumperExperiment:
             update_bn_time = 0.0
 
             if hasattr(optimizer, 'jump'):
-                if epoch > 2 and epoch <= 200:
+                if epoch > 2 :
                     optimizer.jump()
                     immediate_post_jump_time = time.perf_counter() - Pre_Jump_time - start_epoch_time
                     update_bn_time = time.perf_counter() - immediate_post_jump_time - Pre_Jump_time - start_epoch_time
-                    acc_post = self.evaluate(model)
-                else:
-                    acc_post = 'N/A'
-            else:
-                acc_post = None
                 
             # Step the scheduler at the end of the epoch (Standard for StepLR, CosineAnnealingLR)
             if scheduler is not None:
@@ -98,11 +92,11 @@ class JumperExperiment:
 
             Jump_time = time.perf_counter() - start_epoch_time - Pre_Jump_time
             vram = torch.cuda.max_memory_allocated() / (1024**2) if torch.cuda.is_available() else 0
-            print(f"Epoch {epoch} | Loss: {total_loss:.4f} | Acc: {acc_pre:.2f}% | Post-Jump Acc: {acc_post if acc_post else 'N/A'} | Time:{Pre_Jump_time:.1f}s + {Jump_time:.1f}s , period:{period}")
+            print(f"Epoch {epoch} | Loss: {total_loss:.4f} | Acc: {acc_pre:.2f}%  | Time:{Pre_Jump_time:.1f}s + {Jump_time:.1f}s ")
 
             self.results.append({
                 'optimizer': opt_name, 'epoch': epoch, 'test_acc': acc_pre, 
-                'jump_acc': acc_post, 'vram_mb': vram, 'time': time.perf_counter() - start_time
+                'vram_mb': vram, 'time': time.perf_counter() - start_time
             })
 
     def export(self, prefix):
@@ -118,7 +112,7 @@ if __name__ == "__main__":
     train_loader, test_loader, num_classes = cifar_loaders(dataset="cifar10", batch_size=128)
     epochs_count = 200
 
-    cosine_schd_gen = lambda opt : CosineAnnealingLR(opt, T_max=epochs_count//2) 
+    cosine_schd_gen = lambda opt : CosineAnnealingLR(opt, T_max=epochs_count) 
     multi_step_gen = lambda opt : torch.optim.lr_scheduler.MultiStepLR(opt, milestones=[80, 160], gamma=0.1) 
     exp = JumperExperiment(resnet18_cifar, train_loader, test_loader, num_classes=num_classes)
 
