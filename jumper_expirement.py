@@ -80,7 +80,6 @@ class JumperExperiment:
             # Jump logic
             immediate_post_jump_time = 0.0
             update_bn_time = 0.0
-            period = period * 1.02
 
             if hasattr(optimizer, 'jump'):
                 if epoch > 2 and epoch <= 200:

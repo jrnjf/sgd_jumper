@@ -9,8 +9,7 @@ def triangle_wave(t, T=1.0, max=1.0 , min=0.1):
     else:
         return min + (max - min) * (2 - 2 * x / T)
 
-def x(x):
-    return math.log(x + 1.0)
+
 class Jumper(Optimizer):
     def __init__(self, params,steps_per_epoch, lr=0.5, ocilation=1e-2, momentum=0.0, jump_mult=1.5,fit_type='linear',weight_decay=0.0):
         """
