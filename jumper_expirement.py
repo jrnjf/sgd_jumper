@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     # 1. Custom Jumper optimizer (internally schedules LR based on your setup)
     exp.run("Jumper", 
-    optimizer_gen=lambda p: Jumper(p,steps_per_epoch=len(train_loader),lr=0.8,jump_mult=20.0,fit_type='log',ocilation=0.1,momentum=0.0,weight_decay=5e-4),
+    optimizer_gen=lambda p: Jumper(p,steps_per_epoch=len(train_loader),lr=0.8,gamma=20.0,fit_type='log',lr_SWR=10,momentum=0.0,weight_decay=5e-4),
      epochs=epochs_count,
      scheduler_gen=cosine_schd_gen)  
     
