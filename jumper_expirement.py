@@ -80,12 +80,7 @@ class JumperExperiment:
             immediate_post_jump_time = 0.0
             update_bn_time = 0.0
 
-            if hasattr(optimizer, 'jump'):
-                if epoch > 2 :
-                    optimizer.jump()
-                    immediate_post_jump_time = time.perf_counter() - Pre_Jump_time - start_epoch_time
-                    update_bn_time = time.perf_counter() - immediate_post_jump_time - Pre_Jump_time - start_epoch_time
-                
+
             # Step the scheduler at the end of the epoch (Standard for StepLR, CosineAnnealingLR)
             if scheduler is not None:
                 scheduler.step()

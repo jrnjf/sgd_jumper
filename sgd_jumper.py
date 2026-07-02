@@ -15,7 +15,7 @@ activations = {
 }
 # lr_SWR is the Standing Wave Ratio for the learning rate lr_max/lr_min, used to determine lr_min in the traingle wave function, the reason for using SWR instead of lr_min directly is to allow for global schedulers to be used with the optimizer, and lr_min can be adjusted accordingly. The default value of 1e-2 is a reasonable starting point for many tasks, but it can be tuned based on the specific problem and dataset.
 class Jumper(Optimizer):
-    def __init__(self, params,steps_per_epoch, lr=0.5, lr_SWR=1e-2, momentum=0.0, gamma=1.5,fit_type='log',weight_decay=0.0):
+    def __init__(self, params,steps_per_epoch, lr=0.5, lr_SWR=10, momentum=0.0, gamma=1.5,fit_type='log',weight_decay=0.0):
         """
         SGD-Jumper: Trend extrapolation of weights.
         
@@ -29,7 +29,7 @@ class Jumper(Optimizer):
             raise ValueError(f"Invalid fit_type: {fit_type}")
         if momentum < 0.0:
             raise ValueError(f"Invalid momentum value: {momentum}")
-    
+        
         defaults = dict(lr=lr, lr_SWR=lr_SWR, momentum=momentum, gamma=gamma, steps_per_epoch=steps_per_epoch, weight_decay=weight_decay)
         super(Jumper, self).__init__(params, defaults)
 
@@ -60,12 +60,15 @@ class Jumper(Optimizer):
             steps_per_epoch = group['steps_per_epoch']
             momentum = group['momentum']
             weight_decay = group['weight_decay']
-
+            gamma = group['gamma']
             for p in group['params']:
                 if p.grad is None:
                     continue
-                
+
                 state = self.state[p]
+                if state['step_count'] == 0 and state['sum_x'] > 0:
+                    self.jump(gamma, lr, p, steps_per_epoch)
+                    self._reset_epoch_stats(p)
                 d_p = p.grad
 
                 # 1. Momentum Update with Reset logic
@@ -88,53 +91,44 @@ class Jumper(Optimizer):
 
                 # 3. Accumulate Linear Regression Stats
                 x =  self.activation((state['step_count']))
-
+                y = p.data.detach()
+                
                 state['sum_x'] += x
-                state['sum_y'].add_(p)
-                state['sum_xy'].add_(p.mul(x))
+                state['sum_y'].add_(y)
+                state['sum_xy'].add_(y.mul(x))
                 state['sum_x2'] += x**2
                 state['step_count'] += 1
+
+                if state['step_count'] >= steps_per_epoch:
+                    state['step_count'] = 0
 
         return loss
 
     @torch.no_grad()
-    def jump(self):
+    def jump(self,gamma,lr,p,steps_per_epoch):
         """Fits ax+b to weight history and projects to n = steps * gamma"""
-        last_n_target = 0
-        for group in self.param_groups:
-            gamma = group['gamma']
-            jump_count = group.get('jump_count', 0)+1
-            group['jump_count'] = jump_count
-            lr = group['lr']
-            for p in group['params']:
-                state = self.state[p]
-                n_obs = state['step_count']
+        state = self.state[p]
+        n_obs = state['step_count']
                 
-                if n_obs < 2:
-                    continue
+        if n_obs < 2:
+            return
                 
-                jump = 1 + gamma*lr # a jump is relative to learning rate this is helpful for learning_rate schedules
-                n_target = n_obs * jump
-                last_n_target = n_target
+        jump = 1 + gamma*lr # a jump is relative to learning rate this is helpful for learning_rate schedules
+        n_target = n_obs * jump
+        last_n_target = n_target
 
                 # Solve Linear Regression: y = ax + b
-                denom = (n_obs * state['sum_x2']) - (state['sum_x']**2)
-                if abs(denom) < 1e-9:
-                    continue
+        denom = (n_obs * state['sum_x2']) - (state['sum_x']**2)
+        if abs(denom) < 1e-9:
+            return 
                 
-                a = (state['sum_xy'].mul(n_obs).sub_(state['sum_y'].mul(state['sum_x']))).div_(denom)
-                b = (state['sum_y'].sub_(a.mul(state['sum_x']))) / n_obs
-                p.data.copy_(a.mul_(self.activation(n_target)).add_(b))
+        a = (state['sum_xy'].mul(n_obs).sub_(state['sum_y'].mul(state['sum_x']))).div_(denom)
+        b = (state['sum_y'].sub_(a.mul(state['sum_x']))) / n_obs
+        p.data.copy_(a.mul_(self.activation(n_target)).add_(b))
                             
+        return 
 
-
-        self._reset_epoch_stats(last_n_target)
-        return last_n_target
-
-    def _reset_epoch_stats(self,current_step=0):
-        for group in self.param_groups:
-
-            for p in group['params']:
+    def _reset_epoch_stats(self,p):
                 state = self.state[p]
                 state['step_count'] = 0
                 state['sum_x'] = 0.0
