@@ -78,7 +78,7 @@ optimizer = Jumper(
     
 
 As demonstrated in the validation curves below, SGD-Jumper achieves rapid early acceleration, climbing into higher accuracy boundaries significantly faster than SGD-M and ultimately establishing a higher final generalization plateau than AdamW.
-[![Acc vs Epoch curve](https://github.com/jrnjf/sgd_jumper/blob/main/benchmarks/acc_epoch.png)]
+![Acc vs Epoch curve](https://github.com/jrnjf/sgd_jumper/blob/main/benchmarks/acc_epoch.png)
 
 ### ⏱️ Wall-Clock Target Acquisition Speed (Seconds to reach threshold)
 
