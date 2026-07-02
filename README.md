@@ -60,7 +60,7 @@ optimizer = Jumper(
     
 - **`momentum`**: SGD momentum.
     
-- **`gamma`**: Proportional multiplier step distance scale applied during trend extrapolation for `fit_type='log' gamm =~[0-50]` for `fit_type=linear`or `sqrt` then `gamma=~[0-2]` 
+- **`gamma`**: Proportional multiplier step distance scale applied during trend extrapolation for `fit_type='log'` and  `gamma =~[0-50]` for `fit_type=linear`or `sqrt` then `gamma=~[0-2]` 
     
 - **`fit_type`**: Mathematical kernel used to fit weight trajectories (`linear`, `log`, or `sqrt`).
     
