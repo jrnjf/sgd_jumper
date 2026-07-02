@@ -56,7 +56,7 @@ optimizer = Jumper(
     
 - **`lr`**: Base learning rate.
     
-- **`ocilation`**: Amplitude for the built-in cyclic triangle-wave learning modulation loop.
+- **`lr_SWR`**: For the built-in cyclic lr , `lr_min = lr/lr_SWR`.
     
 - **`momentum`**: SGD momentum.
     
