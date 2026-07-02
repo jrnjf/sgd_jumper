@@ -20,7 +20,7 @@
 ### 📥 Installation
 
 ```bash
-git clone [https://github.com/jrnjf/sgd_jumper.git](https://github.com/jrnjf/sgd_jumper.git)
+git clone https://github.com/jrnjf/sgd_jumper.git
 
 cd sgd-jumper
 ```
@@ -92,7 +92,7 @@ As demonstrated in the validation curves below, SGD-Jumper achieves rapid early 
 
 To replicate these benchmark results and track weight evolution paths locally, execute the pipeline wrapper:
 ```bash
-git clone [https://github.com/jrnjf/sgd_jumper.git](https://github.com/jrnjf/sgd_jumper.git)
+git clone https://github.com/jrnjf/sgd_jumper.git
 
 cd sgd-jumper
 
